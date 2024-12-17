@@ -1,0 +1,82 @@
+#include <EEPROM.h>
+
+// Пины управления шаговиком
+#define STEP_PIN         5
+#define DIR_PIN         2
+#define ENABLE_PIN     8
+
+// Пины кнопок
+#define down_button     9
+#define up_button        10
+
+// Настройки времени между импульсами
+#define frequency        1900     // Время между импульсами в мксек
+#define debounceDelay    50       // Задержка для подавления дребезга (мс)
+#define motorRunTime     2000     // Время работы мотора в мс (2 секунды)
+
+// Логический флаг для включения мотора
+bool motor_enabled = false;
+unsigned long motorStartTime = 0;  // Время начала работы мотора
+
+// Переменные для хранения времени последней проверки кнопки
+unsigned long lastDebounceTimeDown = 0;
+unsigned long lastDebounceTimeUp = 0;
+bool lastButtonStateDown = HIGH;
+bool lastButtonStateUp = HIGH;
+
+void setup() {
+    pinMode(down_button, INPUT_PULLUP); // Подтягиваем кнопки к питанию
+    pinMode(up_button, INPUT_PULLUP);
+
+    pinMode(STEP_PIN , OUTPUT);         // Настраиваем пины управления
+    pinMode(DIR_PIN , OUTPUT);
+    pinMode(ENABLE_PIN , OUTPUT);
+
+    digitalWrite(ENABLE_PIN , HIGH);     // Выключаем мотор, чтобы не грелся
+}
+
+void loop() {
+    // Обработка кнопки для движения вниз
+    bool readingDown = digitalRead(down_button);
+    if (readingDown != lastButtonStateDown) {
+        lastDebounceTimeDown = millis(); // Сбрасываем время последней проверки
+    }
+    if ((millis() - lastDebounceTimeDown) > debounceDelay) {
+        if (readingDown == LOW && !motor_enabled) { // Кнопка нажата и мотор выключен
+            motor_enabled = true;   // Включаем мотор
+            motorStartTime = millis();  // Запоминаем время начала работы мотора
+            digitalWrite(ENABLE_PIN, LOW); // Активируем двигатель
+            digitalWrite(DIR_PIN, HIGH);   // Направление вниз
+        } 
+    }
+    lastButtonStateDown = readingDown;
+
+    // Обработка кнопки для движения вверх
+    bool readingUp = digitalRead(up_button);
+    if (readingUp != lastButtonStateUp) {
+        lastDebounceTimeUp = millis(); // Сбрасываем время последней проверки
+    }
+    if ((millis() - lastDebounceTimeUp) > debounceDelay) {
+        if (readingUp == LOW && !motor_enabled) { // Кнопка нажата и мотор выключен
+            motor_enabled = true;   // Включаем мотор
+            motorStartTime = millis();  // Запоминаем время начала работы мотора
+            digitalWrite(ENABLE_PIN, LOW); // Активируем двигатель
+            digitalWrite(DIR_PIN, LOW);    // Направление вверх
+        } 
+    }
+    lastButtonStateUp = readingUp;
+
+    // Проверяем, сколько времени прошло с момента включения мотора
+    if (motor_enabled && (millis() - motorStartTime >= motorRunTime)) {
+        motor_enabled = false;  // Останавливаем мотор после 2 секунд
+        digitalWrite(ENABLE_PIN, HIGH); // Деактивируем двигатель
+    }
+
+    // Выполняем движение, если двигатель включен
+    if (motor_enabled) {
+        digitalWrite(STEP_PIN, HIGH);
+        delayMicroseconds(frequency);
+        digitalWrite(STEP_PIN, LOW);
+        delayMicroseconds(frequency);
+    }
+}
