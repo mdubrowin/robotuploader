@@ -1,0 +1,47 @@
+#Тестовая программа.
+
+ON
+
+#WAIT C(INP3) 
+#MOVE C(INP6) F(30) D(1) # если площадка не в крайнем пол
+
+S:
+
+#Ждем вход1
+
+WAIT C(INP3) 
+
+WAIT C(INP4) # ЕСЛИ площадка вверху
+WAIT C(INP6) # ЕСЛИ не в переднем положении
+MOVE L(11000) # едем вперед
+WAIT T(1000)
+
+SET REL1, 1 # ОПУСКАНИЕ
+WAIT T(1000)
+SET REL1, 0
+
+WAIT T(2000) # ПРОШИВКА
+
+SET REL2, 1 # ПОДНЯТИЕ
+WAIT T(1000)
+SET REL2, 0
+
+WAIT C(INP4)
+WAIT C(INP3)
+WAIT C(INP7) # ЕСЛИ не в заднем положении
+MOVE L (-11000) # едем назад
+WAIT T(1000)
+
+SET REL1, 1 # ОПУСКАНИЕ
+WAIT T(1000)
+SET REL1, 0
+
+WAIT T(2000) # ПРОШИВКА
+
+SET REL2, 1 # ПОДНЯТИЕ
+WAIT T(1000)
+SET REL2, 0
+
+
+
+JMP S:
